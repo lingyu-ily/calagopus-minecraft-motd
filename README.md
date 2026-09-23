@@ -103,7 +103,7 @@ Compose 停止時會傳送 SIGTERM，並等待最多 30 秒讓 agent 清除自�
 
 ## 使用 GitHub Actions 建置 Docker 映像
 
-原始碼位於 [lingyu-ily/calagopus-minecraft-motd](https://github.com/lingyu-ily/calagopus-minecraft-motd)，`.github/workflows/agent-image.yml` 在 pull request 和一般分支推送時檢查 `linux/amd64`、`linux/arm64` 建置；推送到預設分支時，另外發布 `ghcr.io/lingyu-ily/calagopus-minecraft-motd:latest` 與 `:sha-...`；推送 `v*` 標籤時發布對應版本標籤。發布使用 GitHub 提供的 `GITHUB_TOKEN`，不需另設推送憑證。
+原始碼位於 [lingyu-ily/calagopus-minecraft-motd](https://github.com/lingyu-ily/calagopus-minecraft-motd)，`.github/workflows/agent-image.yml` 在 pull request 和一般分支推送時檢查 `linux/amd64` 建置；推送到預設分支時，另外發布 `ghcr.io/lingyu-ily/calagopus-minecraft-motd:latest` 與 `:sha-...`；推送 `v*` 標籤時發布對應版本標籤。發布使用 GitHub 提供的 `GITHUB_TOKEN`，不需另設推送憑證。GHCR 映像僅供 `amd64` 節點使用；`arm64` 節點仍可依前述 Docker Compose 章節自行從原始碼建置。
 
 在 [GitHub Actions](https://github.com/lingyu-ily/calagopus-minecraft-motd/actions/workflows/agent-image.yml) 查看建置結果。若要讓 Wings 主機免登入拉取映像，將 GHCR package 設為公開；私人 package 需先在節點以具備 `read:packages` 權限的憑證登入 `ghcr.io`。
 
