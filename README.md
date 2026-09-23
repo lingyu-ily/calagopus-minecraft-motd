@@ -103,29 +103,18 @@ Compose 停止時會傳送 SIGTERM，並等待最多 30 秒讓 agent 清除自�
 
 ## 使用 GitHub Actions 建置 Docker 映像
 
-將 **`calagopus-minecraft-motd/` 的內容作為 GitHub 儲存庫根目錄**。`.github/workflows/agent-image.yml` 在 pull request 和一般分支推送時檢查 `linux/amd64`、`linux/arm64` 建置；推送到儲存庫的預設分支時，另外發布 `ghcr.io/OWNER/REPO:latest` 與 `:sha-...`；推送 `v*` 標籤時發布對應版本標籤。`OWNER/REPO` 自動取自 GitHub 儲存庫名稱並轉為小寫。發布使用 GitHub 提供的 `GITHUB_TOKEN`，不需另設推送憑證。
+原始碼位於 [lingyu-ily/calagopus-minecraft-motd](https://github.com/lingyu-ily/calagopus-minecraft-motd)，`.github/workflows/agent-image.yml` 在 pull request 和一般分支推送時檢查 `linux/amd64`、`linux/arm64` 建置；推送到預設分支時，另外發布 `ghcr.io/lingyu-ily/calagopus-minecraft-motd:latest` 與 `:sha-...`；推送 `v*` 標籤時發布對應版本標籤。發布使用 GitHub 提供的 `GITHUB_TOKEN`，不需另設推送憑證。
 
-若 GitHub 儲存庫尚未建立，先在 GitHub 建立一個空儲存庫，再從本專案目錄推送；將網址換成自己的儲存庫：
-
-```bash
-cd calagopus-minecraft-motd
-git init -b main
-git add .
-git commit -m "Add Minecraft MOTD agent and Docker build"
-git remote add origin https://github.com/OWNER/REPO.git
-git push -u origin main
-```
-
-在 GitHub 的 **Actions → Build MOTD agent image** 查看建置結果。若要讓 Wings 主機免登入拉取映像，將 GHCR package 設為公開；私人 package 需先在節點以具備 `read:packages` 權限的憑證登入 `ghcr.io`。
+在 [GitHub Actions](https://github.com/lingyu-ily/calagopus-minecraft-motd/actions/workflows/agent-image.yml) 查看建置結果。若要讓 Wings 主機免登入拉取映像，將 GHCR package 設為公開；私人 package 需先在節點以具備 `read:packages` 權限的憑證登入 `ghcr.io`。
 
 在每台 Linux Wings 主機取用 GitHub 建好的映像時，仍保留本專案的 `packaging/compose.yaml`，從專案根目錄執行：
 
 ```bash
-printf 'MOTD_AGENT_IMAGE=ghcr.io/OWNER/REPO:latest\n' > packaging/image.env
+printf 'MOTD_AGENT_IMAGE=ghcr.io/lingyu-ily/calagopus-minecraft-motd:latest\n' > packaging/image.env
 sudo docker compose --env-file packaging/image.env -f packaging/compose.yaml pull agent
 ```
 
-首次安裝需先取得 Panel 一次性註冊權杖，並使用相同的 GHCR 映像執行上方「首次安裝」中的 `docker run ... enroll` 命令（將映像名稱換成 `ghcr.io/OWNER/REPO:latest`）；已有 systemd 設定的節點可直接沿用。確認舊 agent 已停止後啟動：
+首次安裝需先取得 Panel 一次性註冊權杖，並使用相同的 GHCR 映像執行上方「首次安裝」中的 `docker run ... enroll` 命令（將映像名稱換成 `ghcr.io/lingyu-ily/calagopus-minecraft-motd:latest`）；已有 systemd 設定的節點可直接沿用。確認舊 agent 已停止後啟動：
 
 ```bash
 sudo docker compose --env-file packaging/image.env -f packaging/compose.yaml up -d --no-build agent
