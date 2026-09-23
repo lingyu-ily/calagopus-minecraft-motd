@@ -1,0 +1,28 @@
+[package]
+name = "ily_gfs_minecraftmotd"
+description = "State-aware Minecraft Java MOTD and wake-on-login support for Calagopus."
+authors = ["ily.gfs"]
+version = "1.0.0"
+edition = { workspace = true }
+license = "MIT"
+
+[dependencies]
+shared = { workspace = true }
+wings-api = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+axum = { workspace = true }
+utoipa = { workspace = true }
+utoipa-axum = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+rand = { workspace = true }
+indexmap = { workspace = true }
+compact_str = { workspace = true }
+anyhow = { workspace = true }
+base64 = { workspace = true }

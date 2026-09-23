@@ -1,0 +1,6 @@
+/.git
+/agent/target
+/dist
+/extension
+/scripts
+*.tmp

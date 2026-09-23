@@ -1,0 +1,8 @@
+panel_url = "https://panel.example.com"
+agent_token = "replace-with-the-64-character-token-returned-by-enroll"
+node_uuid = "00000000-0000-0000-0000-000000000000"
+listen_port = 4001
+poll_interval_seconds = 2
+stale_after_seconds = 15
+firewall_backend = "auto"
+

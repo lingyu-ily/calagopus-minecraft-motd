@@ -1,0 +1,5 @@
+/dist/
+/agent/target/
+/extension/frontend/node_modules/
+/packaging/image.env
+*.tmp

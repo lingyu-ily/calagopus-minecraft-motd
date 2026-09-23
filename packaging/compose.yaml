@@ -1,0 +1,24 @@
+services:
+  agent:
+    image: ${MOTD_AGENT_IMAGE:-calagopus-minecraft-motd-agent:local}
+    build:
+      context: ..
+      dockerfile: packaging/Dockerfile
+    network_mode: host
+    user: "0:0"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - type: bind
+        source: /etc/calagopus-motd-agent
+        target: /etc/calagopus-motd-agent
+        read_only: true
+    init: true
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
+    restart: unless-stopped

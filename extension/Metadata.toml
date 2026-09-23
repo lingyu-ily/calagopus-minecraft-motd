@@ -1,0 +1,4 @@
+package_name = "ily.gfs.minecraftmotd"
+name = "Minecraft MOTD"
+panel_version = ">=1.2.2,<2.0.0"
+
