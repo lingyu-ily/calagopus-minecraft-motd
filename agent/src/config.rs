@@ -64,6 +64,40 @@ impl AgentConfig {
         Ok(())
     }
 
+    pub fn apply_env_overrides(&mut self) -> anyhow::Result<()> {
+        if let Some(value) = env_override("MOTD_PANEL_URL")? {
+            let value = value.trim().trim_end_matches('/');
+            if value.is_empty() {
+                anyhow::bail!("MOTD_PANEL_URL must not be empty");
+            }
+            self.panel_url = value.to_owned();
+        }
+        if let Some(value) = env_override("MOTD_LISTEN_PORT")? {
+            self.listen_port = value
+                .parse()
+                .context("MOTD_LISTEN_PORT must be a valid TCP port")?;
+        }
+        if let Some(value) = env_override("MOTD_POLL_INTERVAL_SECONDS")? {
+            self.poll_interval_seconds = value
+                .parse()
+                .context("MOTD_POLL_INTERVAL_SECONDS must be a positive integer")?;
+        }
+        if let Some(value) = env_override("MOTD_STALE_AFTER_SECONDS")? {
+            self.stale_after_seconds = value
+                .parse()
+                .context("MOTD_STALE_AFTER_SECONDS must be a positive integer")?;
+        }
+        if let Some(value) = env_override("MOTD_FIREWALL_BACKEND")? {
+            self.firewall_backend = match value.as_str() {
+                "auto" => FirewallPreference::Auto,
+                "nftables" => FirewallPreference::Nftables,
+                "iptables" => FirewallPreference::Iptables,
+                _ => anyhow::bail!("MOTD_FIREWALL_BACKEND must be auto, nftables, or iptables"),
+            };
+        }
+        self.validate()
+    }
+
     fn validate(&self) -> anyhow::Result<()> {
         if self.agent_token.len() < 32 {
             anyhow::bail!("agent token is invalid");
@@ -78,5 +112,13 @@ impl AgentConfig {
             anyhow::bail!("stale_after_seconds must not be shorter than the poll interval");
         }
         Ok(())
+    }
+}
+
+fn env_override(key: &str) -> anyhow::Result<Option<String>> {
+    match std::env::var(key) {
+        Ok(value) => Ok(Some(value)),
+        Err(std::env::VarError::NotPresent) => Ok(None),
+        Err(error) => Err(error).with_context(|| format!("{key} is invalid")),
     }
 }

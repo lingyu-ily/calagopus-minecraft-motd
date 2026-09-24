@@ -103,13 +103,7 @@ async fn main() -> anyhow::Result<()> {
             }
 
             let mut agent_config = AgentConfig::load(&config).await?;
-            if let Ok(panel_url) = env::var("MOTD_PANEL_URL") {
-                let panel_url = panel_url.trim().trim_end_matches('/');
-                if panel_url.is_empty() {
-                    anyhow::bail!("MOTD_PANEL_URL must not be empty");
-                }
-                agent_config.panel_url = panel_url.to_owned();
-            }
+            agent_config.apply_env_overrides()?;
             run(agent_config).await
         }
         Command::Enroll {
@@ -134,6 +128,10 @@ async fn enroll(
     output: &std::path::Path,
     listen_port: u16,
 ) -> anyhow::Result<()> {
+    let panel_url = panel_url.trim().trim_end_matches('/');
+    if panel_url.is_empty() {
+        anyhow::bail!("panel URL must not be empty");
+    }
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(15))
         .build()?;
@@ -150,7 +148,7 @@ async fn enroll(
         .await?;
 
     AgentConfig {
-        panel_url: panel_url.trim_end_matches('/').to_owned(),
+        panel_url: panel_url.to_owned(),
         agent_token: response.agent_token,
         node_uuid: response.node_uuid,
         listen_port,
