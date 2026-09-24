@@ -16,6 +16,8 @@ use model::{
 use socket2::{Domain, Protocol, Socket, Type};
 use std::{
     collections::BTreeSet,
+    env,
+    io::ErrorKind,
     net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
     path::PathBuf,
     sync::Arc,
@@ -71,7 +73,45 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     match Cli::parse().command {
-        Command::Run { config } => run(AgentConfig::load(&config).await?).await,
+        Command::Run { config } => {
+            match tokio::fs::metadata(&config).await {
+                Ok(_) => {}
+                Err(error) if error.kind() == ErrorKind::NotFound => {
+                    let panel_url = env::var("MOTD_PANEL_URL")
+                        .context("MOTD_PANEL_URL is required for first-time enrollment")?;
+                    let enrollment_token = env::var("MOTD_ENROLLMENT_TOKEN")
+                        .context("MOTD_ENROLLMENT_TOKEN is required for first-time enrollment")?;
+                    if panel_url.trim().trim_end_matches('/').is_empty() {
+                        anyhow::bail!("MOTD_PANEL_URL must not be empty");
+                    }
+                    if enrollment_token.is_empty() {
+                        anyhow::bail!("MOTD_ENROLLMENT_TOKEN must not be empty");
+                    }
+                    let listen_port = match env::var("MOTD_LISTEN_PORT") {
+                        Ok(value) => value
+                            .parse::<u16>()
+                            .context("MOTD_LISTEN_PORT must be a valid TCP port")?,
+                        Err(env::VarError::NotPresent) => 4001,
+                        Err(error) => return Err(error).context("MOTD_LISTEN_PORT is invalid"),
+                    };
+                    if listen_port == 0 {
+                        anyhow::bail!("MOTD_LISTEN_PORT must not be zero");
+                    }
+                    enroll(&panel_url, &enrollment_token, &config, listen_port).await?;
+                }
+                Err(error) => return Err(error).context("failed to inspect agent configuration"),
+            }
+
+            let mut agent_config = AgentConfig::load(&config).await?;
+            if let Ok(panel_url) = env::var("MOTD_PANEL_URL") {
+                let panel_url = panel_url.trim().trim_end_matches('/');
+                if panel_url.is_empty() {
+                    anyhow::bail!("MOTD_PANEL_URL must not be empty");
+                }
+                agent_config.panel_url = panel_url.to_owned();
+            }
+            run(agent_config).await
+        }
         Command::Enroll {
             panel_url,
             enrollment_token,

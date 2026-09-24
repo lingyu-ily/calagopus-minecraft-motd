@@ -122,6 +122,23 @@ sudo docker compose --env-file packaging/image.env -f packaging/compose.yaml up 
 
 日後更新時，重新執行 `pull agent` 與 `up -d --no-build agent`。Compose 會停止舊容器，讓 agent 清理防火牆規則後啟動新映像。
 
+### 在 Unraid Docker 管理頁安裝
+
+選擇 `ghcr.io/lingyu-ily/calagopus-minecraft-motd:latest` 映像。建立容器時設定：
+
+| Unraid 欄位 | 值 |
+| --- | --- |
+| Network Type | `Host`；不新增連接埠對應 |
+| Path | 主機 `/mnt/user/appdata/calagopus-motd-agent` → 容器 `/etc/calagopus-motd-agent`，首次註冊時須可寫入 |
+| Variable `MOTD_PANEL_URL` | 可從該節點連線的 Panel 網址，例如 `https://panel.example.com` |
+| Variable `MOTD_ENROLLMENT_TOKEN` | 從 Panel 為這台節點產生的一次性註冊權杖，僅首次註冊需要 |
+| Variable `MOTD_LISTEN_PORT` | 選填，首次註冊時的監聽埠；預設 `4001` |
+| Extra Parameters（Advanced View） | `--cap-drop=ALL --cap-add=NET_ADMIN --cap-add=NET_RAW --security-opt=no-new-privileges --stop-timeout=30` |
+
+容器首次啟動時，如果掛載目錄沒有 `config.toml`，會用上述變數向 Panel 註冊並寫入設定檔，然後啟動 agent。確認註冊成功後，從 Unraid 模板移除 `MOTD_ENROLLMENT_TOKEN`；後續啟動會沿用設定檔中的節點憑證，不會重複註冊。`MOTD_PANEL_URL` 在每次啟動時覆蓋設定檔中的 Panel 網址，因此可在 Unraid 修改後重啟容器生效；`MOTD_LISTEN_PORT` 只在首次註冊時使用，之後要更改埠號需修改設定檔。請保留主機掛載目錄，並確認埠號未被占用且未對外開放。
+
+若從 systemd 遷移，先停止舊服務，然後把現有 `/etc/calagopus-motd-agent` 作為 Unraid 的主機掛載路徑；已有設定檔時不需要 `MOTD_ENROLLMENT_TOKEN`，掛載也可設為唯讀。兩個 agent 不可同時執行。
+
 ## 每服自動啟動
 
 伺服器擁有者與具有 `settings.motd` 權限的子使用者可在伺服器 Settings 頁切換。資料庫預設固定為 `false`；變更會寫入 `server:motd.update` 活動紀錄。使用者第一次登入離線伺服器時會收到 starting 踢出訊息，需稍後重新連線。
